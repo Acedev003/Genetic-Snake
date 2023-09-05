@@ -1,3 +1,4 @@
+import time
 import random
 
 import  curses
@@ -25,13 +26,15 @@ class Snake:
         
         if (direction == self.DIR_RGT):
             return [(heady,headx+i)for i in range(length)]
+    
         
     def __log(self,msg):
         file = open("log.txt",'a+')
         file.writelines([str(msg)+"\n"])
         file.close()
     
-    def __init__(self,world_height,world_width,length=5):
+    
+    def __init__(self,world_height,world_width,length=15):
         self.DIR_UP  =  1
         self.DIR_RGT =  2
         self.DIR_DWN = -1
@@ -45,37 +48,38 @@ class Snake:
                                         self.DIR_UP])
 
         self.body      = self.__generate_body(world_height,world_width,self.length,self.direction)
-      
         
     def draw(self,screen: 'curses._CursesWindow'):
         for bone in self.body:
             screen.addch(bone[0],bone[1],'#')
-
-
-    def move(self,direction):
+    
+    def set_direction(self,direction):
+        self.direction = direction
+    
+    def move(self):
         body = []
         
-        if (direction == self.DIR_UP):
+        if (self.direction == self.DIR_UP):
             body.append((self.body[0][0]-1,self.body[0][1]))
             
-        if (direction == self.DIR_DWN):
+        if (self.direction == self.DIR_DWN):
             body.append((self.body[0][0]+1,self.body[0][1]))
         
-        if (direction == self.DIR_LFT):
+        if (self.direction == self.DIR_LFT):
             body.append((self.body[0][0],self.body[0][1]-1))
         
-        if (direction == self.DIR_RGT):
+        if (self.direction == self.DIR_RGT):
             body.append((self.body[0][0],self.body[0][1]+1))
 
         for bone in self.body[:-1]:
             body.append(bone)
 
         self.body = body
+        self.__log(body)
             
-    
     def am_i_alive(self):
         pass
-            
+    
 def main(screen: 'curses._CursesWindow'):
     running = True
     
@@ -96,21 +100,24 @@ def main(screen: 'curses._CursesWindow'):
     snake = Snake(maxy,maxx)
     
     while running:    
+        screen.clear()
         key = screen.getch()
         if key == ord('q') or key == ord('Q'):
             running = False
             continue
         if key == curses.KEY_UP:
-            snake.move(snake.DIR_UP)
+            snake.set_direction(snake.DIR_UP)
         elif key == curses.KEY_DOWN:
-            snake.move(snake.DIR_DWN)
+            snake.set_direction(snake.DIR_DWN)
         elif key == curses.KEY_LEFT:
-            snake.move(snake.DIR_LFT)
+            snake.set_direction(snake.DIR_LFT)
         elif key == curses.KEY_RIGHT:
-            snake.move(snake.DIR_RGT)
+            snake.set_direction(snake.DIR_RGT)
         
         snake.draw(screen)
+        snake.move()
         screen.refresh()
+        time.sleep(0.09)
 
 if __name__ == '__main__':
     input("Starting TermSnake .... Press Enter to continue ")
