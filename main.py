@@ -9,16 +9,16 @@ MIN_SCRN_HEIGHT = 25
 MIN_SCRN_WIDTH  = 80
 
 class Snake:
-    
+     
     def __generate_body(self,world_height,world_width,length,direction):
         headx = random.randint(length,world_width-1)
         heady = random.randint(length,world_height-1)
         
         if (direction == self.DIR_UP):
-            return [(heady+i,headx)for i in range(length)]
+            return [(heady-i,headx)for i in range(length)]
         
         if (direction == self.DIR_DWN):
-            return [(heady-i,headx)for i in range(length)]
+            return [(heady+i,headx)for i in range(length)]
         
         if (direction == self.DIR_LFT):
             return [(heady,headx-i)for i in range(length)]
@@ -26,13 +26,12 @@ class Snake:
         if (direction == self.DIR_RGT):
             return [(heady,headx+i)for i in range(length)]
         
-        
     def __log(self,msg):
         file = open("log.txt",'a+')
         file.writelines([str(msg)+"\n"])
         file.close()
     
-    def __init__(self,world_height,world_width,length=2):
+    def __init__(self,world_height,world_width,length=5):
         self.DIR_UP  =  1
         self.DIR_RGT =  2
         self.DIR_DWN = -1
@@ -46,13 +45,37 @@ class Snake:
                                         self.DIR_UP])
 
         self.body      = self.__generate_body(world_height,world_width,self.length,self.direction)
-            
+      
         
     def draw(self,screen: 'curses._CursesWindow'):
         for bone in self.body:
             screen.addch(bone[0],bone[1],'#')
-        
 
+
+    def move(self,direction):
+        body = []
+        
+        if (direction == self.DIR_UP):
+            body.append((self.body[0][0]-1,self.body[0][1]))
+            
+        if (direction == self.DIR_DWN):
+            body.append((self.body[0][0]+1,self.body[0][1]))
+        
+        if (direction == self.DIR_LFT):
+            body.append((self.body[0][0],self.body[0][1]-1))
+        
+        if (direction == self.DIR_RGT):
+            body.append((self.body[0][0],self.body[0][1]+1))
+
+        for bone in self.body[:-1]:
+            body.append(bone)
+
+        self.body = body
+            
+    
+    def am_i_alive(self):
+        pass
+            
 def main(screen: 'curses._CursesWindow'):
     running = True
     
@@ -77,6 +100,15 @@ def main(screen: 'curses._CursesWindow'):
         if key == ord('q') or key == ord('Q'):
             running = False
             continue
+        if key == curses.KEY_UP:
+            snake.move(snake.DIR_UP)
+        elif key == curses.KEY_DOWN:
+            snake.move(snake.DIR_DWN)
+        elif key == curses.KEY_LEFT:
+            snake.move(snake.DIR_LFT)
+        elif key == curses.KEY_RIGHT:
+            snake.move(snake.DIR_RGT)
+        
         snake.draw(screen)
         screen.refresh()
 
