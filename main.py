@@ -134,8 +134,10 @@ def main(screen: 'curses._CursesWindow'):
     screen.nodelay(True)
     curses.curs_set(0)
     
-    food  = Food(maxy,maxx)
-    snake = Snake(food,maxy,maxx)
+    food  = Food(maxy-1,maxx-1)
+    snake = Snake(food,maxy-1,maxx-1)
+    
+    start_len = len(snake.body)
     
     while running:    
         screen.clear()
@@ -162,6 +164,8 @@ def main(screen: 'curses._CursesWindow'):
         food.draw(screen)
         snake.draw(screen)
         snake.move()
+        
+        screen.addstr(maxy-1,0,f"Score : {len(snake.body)-start_len}")
         
         screen.refresh()
         time.sleep(0.09)
