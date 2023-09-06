@@ -171,6 +171,6 @@ def main(screen: 'curses._CursesWindow'):
         time.sleep(0.09)
 
 if __name__ == '__main__':
-    input("Starting TermSnake .... Press Enter to continue ")
+    input("Starting Snakevolution-CLI (Generic) .... Press Enter to continue ")
     curses_wrap(main)
     print("Program has terminated")
