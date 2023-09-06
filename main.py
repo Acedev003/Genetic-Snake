@@ -47,9 +47,7 @@ class Snake:
                                         self.DIR_LFT,
                                         self.DIR_RGT,
                                         self.DIR_UP])
-        
-        self.__log(self.direction)
-
+        self.food      = food
         self.body      = self.__generate_body(world_height,world_width,self.length,self.direction)
         
     def draw(self,screen: 'curses._CursesWindow'):
@@ -62,22 +60,31 @@ class Snake:
     
     def move(self):
         body = []
+        grow = False
         
         if (self.direction == self.DIR_UP):
-            body.append((self.body[0][0]-1,self.body[0][1]))
+            head_pos = (self.body[0][0]-1,self.body[0][1])
             
         if (self.direction == self.DIR_DWN):
-            body.append((self.body[0][0]+1,self.body[0][1]))
+            head_pos = (self.body[0][0]+1,self.body[0][1])
         
         if (self.direction == self.DIR_LFT):
-            body.append((self.body[0][0],self.body[0][1]-1))
+            head_pos = (self.body[0][0],self.body[0][1]-1)
         
         if (self.direction == self.DIR_RGT):
-            body.append((self.body[0][0],self.body[0][1]+1))
+            head_pos = (self.body[0][0],self.body[0][1]+1)
+
+        if head_pos == self.food.get_position():
+            grow=True
+            
+        body.append(head_pos)
 
         for bone in self.body[:-1]:
             body.append(bone)
 
+        if grow:
+            body.append(self.body[-1])
+            
         self.body = body
             
     def am_i_alive(self):
@@ -95,10 +102,15 @@ class Snake:
 
 class Food:
     def __init__(self,world_height,world_width):
-        self.position = (random.randint(0,world_height-1),random.randint(0,world_width-1))
+        self.world_height = world_height
+        self.world_width  = world_width
+        self.position = (random.randint(0,self.world_height-1),random.randint(0,self.world_width-1))
         
     def get_position(self):
         return self.position
+    
+    def change_position(self):
+        self.position = (random.randint(0,self.world_height-1),random.randint(0,self.world_width-1))
     
     def draw(self,screen: 'curses._CursesWindow'):
         screen.addch(self.position[0],self.position[1],'O')
