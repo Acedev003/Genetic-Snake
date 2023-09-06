@@ -84,6 +84,7 @@ class Snake:
 
         if grow:
             body.append(self.body[-1])
+            self.food.change_position()
             
         self.body = body
             
