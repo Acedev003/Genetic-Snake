@@ -36,7 +36,7 @@ class Snake:
         
         if (direction == self.DIR_RGT):
             return [(heady,headx-i)for i in range(length)]
-        
+    
     def __sigmoid(self,x):
         try:
             return 1/(1+math.exp(-x))
@@ -99,22 +99,22 @@ class Snake:
         self.distance_foodx = headx - self.food.position[1]
     
         if heady-1 < 0 or (heady-1,headx) in self.body:
-            self.obstacle_top = 0.1
+            self.obstacle_top = 1
         else:
             self.obstacle_top = 0
         
         if heady+1 > self.limity-1 or (heady+1,headx) in self.body:
-            self.obstacle_dwn = 0.1
+            self.obstacle_dwn = 1
         else:
             self.obstacle_dwn = 0
             
         if headx-1 < 0 or (heady,headx-1) in self.body:
-            self.obstacle_lft = 0.1
+            self.obstacle_lft = 1
         else:
             self.obstacle_lft = 0
             
         if headx+1 > self.limitx-1 or (heady,headx+1) in self.body:
-            self.obstacle_rgt = 0.1
+            self.obstacle_rgt = 1
         else:
             self.obstacle_rgt = 0
             
@@ -127,8 +127,10 @@ class Snake:
             self.alive=False
             return
         
-        x0 = (self.distance_foody+self.limity)/(2*(self.limity-1))
-        x1 = (self.distance_foodx+self.limitx)/(2*(self.limitx-1))
+        #x0 = (self.distance_foody+self.limity)/(2*(self.limity-1))
+        #x1 = (self.distance_foodx+self.limitx)/(2*(self.limitx-1))
+        x0 = (self.distance_foody)
+        x1 = (self.distance_foodx)
         x2 = self.obstacle_top
         x3 = self.obstacle_dwn
         x4 = self.obstacle_rgt
@@ -144,10 +146,17 @@ class Snake:
         z2 = self.neural_connections[ 6]*x0 + self.neural_connections[ 7]*x1 + self.neural_connections[ 8]*x2 + self.neural_connections[ 9]*x3 + self.neural_connections[10]*x4 + self.neural_connections[11]*x5
         z3 = self.neural_connections[12]*x0 + self.neural_connections[13]*x1 + self.neural_connections[14]*x2 + self.neural_connections[15]*x3 + self.neural_connections[16]*x4 + self.neural_connections[17]*x5   
         
-        o1 = self.__sigmoid(self.neural_connections[18]*z1 + self.neural_connections[19]*z2 + self.neural_connections[20]*z3)
-        o2 = self.__sigmoid(self.neural_connections[21]*z1 + self.neural_connections[22]*z2 + self.neural_connections[23]*z3)
-        o3 = self.__sigmoid(self.neural_connections[24]*z1 + self.neural_connections[25]*z2 + self.neural_connections[26]*z3)
-        o4 = self.__sigmoid(self.neural_connections[27]*z1 + self.neural_connections[28]*z2 + self.neural_connections[28]*z3)
+        #o1 = self.__sigmoid(self.neural_connections[18]*z1 + self.neural_connections[19]*z2 + self.neural_connections[20]*z3)
+        #o2 = self.__sigmoid(self.neural_connections[21]*z1 + self.neural_connections[22]*z2 + self.neural_connections[23]*z3)
+        #o3 = self.__sigmoid(self.neural_connections[24]*z1 + self.neural_connections[25]*z2 + self.neural_connections[26]*z3)
+        #o4 = self.__sigmoid(self.neural_connections[27]*z1 + self.neural_connections[28]*z2 + self.neural_connections[28]*z3)
+        
+        o1 = self.neural_connections[18]*z1 + self.neural_connections[19]*z2 + self.neural_connections[20]*z3
+        o2 = self.neural_connections[21]*z1 + self.neural_connections[22]*z2 + self.neural_connections[23]*z3
+        o3 = self.neural_connections[24]*z1 + self.neural_connections[25]*z2 + self.neural_connections[26]*z3
+        o4 = self.neural_connections[27]*z1 + self.neural_connections[28]*z2 + self.neural_connections[28]*z3
+        
+        
         
         # o1 = self.__sigmoid(self.neural_connections[ 0]*x0 + self.neural_connections[ 1]*x1 + self.neural_connections[ 2]*x2 + self.neural_connections[ 3]*x3 + self.neural_connections[ 4]*x4 + self.neural_connections[ 5]*x5)
         # o2 = self.__sigmoid(self.neural_connections[ 6]*x0 + self.neural_connections[ 7]*x1 + self.neural_connections[ 8]*x2 + self.neural_connections[ 9]*x3 + self.neural_connections[10]*x4 + self.neural_connections[11]*x5)
@@ -161,13 +170,19 @@ class Snake:
         
         index = [o1,o2,o3,o4].index(max([o1,o2,o3,o4]))
         
+        self.__log(f"Snake {self.id} Output : {[o1,o2,o3,o4]}")
+        
         if   index == 0:
+            self.__log(f"Snake {self.id} Direct : UP")
             self.direction = self.DIR_UP
         elif index == 1:
+            self.__log(f"Snake {self.id} Direct : DWN")
             self.direction = self.DIR_DWN
         elif index == 2:
+            self.__log(f"Snake {self.id} Direct : RGT")
             self.direction = self.DIR_RGT
         elif index == 3:
+            self.__log(f"Snake {self.id} Direct : LFT")
             self.direction = self.DIR_LFT
         
         body = []
@@ -292,7 +307,7 @@ def main(screen: 'curses._CursesWindow'):
         with Pool(6) as pool:
             new_snakes = pool.map(run,snakes)
         
-        new_snakes = sorted(new_snakes,key = lambda x : x.life,reverse=True)
+        new_snakes = sorted(new_snakes,key = lambda x : x.life*int(x.alive),reverse=True)
         new_snakes = sorted(new_snakes,key = lambda x : len(x),reverse=True)[:FIT_POPULATION]
         
         snakes              = []
@@ -316,21 +331,21 @@ def main(screen: 'curses._CursesWindow'):
             conns_b = []
             
             for wght_a,wght_b in zip(snake_a.neural_connections,snake_b.neural_connections):
-                last2_bits_a = wght_a & 1
-                last2_bits_b = wght_b & 1
+                last2_bits_a = wght_a & 2
+                last2_bits_b = wght_b & 2
                 
-                wght_a = (wght_a >> 1) << 1
-                wght_b = (wght_b >> 1) << 1
+                wght_a = (wght_a >> 2) << 2
+                wght_b = (wght_b >> 2) << 2
                 
                 wght_a = wght_a | last2_bits_b
                 wght_b = wght_b | last2_bits_a
                 
                 if random.random() < MUTATION_PRBLTY:
-                    mask   = 1 << random.choice([0,1])
+                    mask   = 1 << random.choice([0])
                     wght_a = mask ^ wght_a
                     
                 if random.random() < MUTATION_PRBLTY:
-                    mask   = 1 << random.choice([0,1])
+                    mask   = 1 << random.choice([0])
                     wght_b = mask ^ wght_b
                     
                 conns_a.append(wght_a)
@@ -376,6 +391,7 @@ def main(screen: 'curses._CursesWindow'):
         
         time.sleep(2)
         screen.clear()
+        best_snake.debug = False
         screen.addstr("Processing . . . .")
         screen.refresh()
 
