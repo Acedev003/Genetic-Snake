@@ -11,10 +11,10 @@ from   curses import wrapper as curses_wrap
 MIN_SCRN_HEIGHT = 25
 MIN_SCRN_WIDTH  = 80
 
-MAX_POPULATION  = 100000
-FIT_POPULATION  = 10000
-ELITE_GUYS      = 3000
-GEN_STEPS       = 1000
+MAX_POPULATION  = 10000
+FIT_POPULATION  = 5000
+ELITE_GUYS      = 2000
+GEN_STEPS       = 2000
 MUTATION_PRBLTY = 0.50
 
 MAX_CONN_WGHT   = 32
@@ -334,14 +334,14 @@ def main(screen: 'curses._CursesWindow'):
             conns_b = []
             
             for wght_a,wght_b in zip(snake_a.neural_connections,snake_b.neural_connections):
-                last2_bits_a = wght_a & 1
-                last2_bits_b = wght_b & 1
+                # last2_bits_a = wght_a & 1
+                # last2_bits_b = wght_b & 1
                 
-                wght_a = (wght_a >> 1) << 1
-                wght_b = (wght_b >> 1) << 1
+                # wght_a = (wght_a >> 1) << 1
+                # wght_b = (wght_b >> 1) << 1
                 
-                wght_a = wght_a | last2_bits_b
-                wght_b = wght_b | last2_bits_a
+                # wght_a = wght_a | last2_bits_b
+                # wght_b = wght_b | last2_bits_a
                 
                 if random.random() < MUTATION_PRBLTY:
                     mask   = 1 << random.choice([0])
