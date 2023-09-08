@@ -406,5 +406,8 @@ def main(screen: 'curses._CursesWindow'):
 
 if __name__ == '__main__':
     input("Starting Snakevolution-CLI (Evolving) .... Press Enter to continue ")
-    curses_wrap(main)
+    
+    # Wrapper for curses intialization and auto de-initialize
+    curses_wrap(main)                  
+    
     print("Program has terminated")
