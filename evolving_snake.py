@@ -1,6 +1,7 @@
 import math
 import time
 import random
+import pickle
 
 from multiprocessing import Pool
 
@@ -276,6 +277,7 @@ def run(snake:'Snake'):
 def main(screen: 'curses._CursesWindow'):
     running = True
     gen     = 0
+    bestlen = 0
     
     maxy,maxx = screen.getmaxyx()
     
@@ -389,6 +391,12 @@ def main(screen: 'curses._CursesWindow'):
         time.sleep(2)
         screen.clear()
         best_snake.debug = False
+        
+        if len(best_snake.body)>bestlen:
+            bestlen = len(best_snake.body)
+            with open('best_snake.snk','wb') as file:
+                pickle.dump(best_snake,file)    
+        
         screen.addstr("Processing . . . .")
         screen.refresh()
 
