@@ -2,9 +2,6 @@ import math
 import time
 import random
 import pickle
-
-from multiprocessing import Pool
-
 import curses
 from   curses import wrapper as curses_wrap
 
@@ -290,49 +287,30 @@ class Food:
     # Render food to screen
     def draw(self,screen: 'curses._CursesWindow'):     
         screen.addch(self.position[0],self.position[1],FOOD_CHAR)
-            
-def interact(snake:'Snake'):
-    for _ in range(GEN_STEPS):
-        snake.perceive()
-        snake.move()
+   
+
+def main(screen: 'curses._CursesWindow'):
     
-    return snake
-
-def crossover_and_mutate(snake_a:'Snake',snake_b:'Snake'):
-    """
-    Crossover, mutate and swap weights of neural connections of 2 snakes.
-    """
-    conns_a = []    # Neural connections of snake_a
-    conns_b = []    # Neural connections of snake_b
-            
-    for wght_a,wght_b in zip(snake_a.neural_connections,snake_b.neural_connections):
-
-        # Crossover utility disabled as it caused worse results. (slow increment in performance)
-        
-        # last2_bits_a = wght_a &
-        # last2_bits_b = wght_b &
-        # wght_a = (wght_a >> 2) <<
-        # wght_b = (wght_b >> 2) <<
-        # wght_a = wght_a | last2_bits
-        # wght_b = wght_b | last2_bits_a
-                
-        # Mutation by random flipping of a bit
-        if random.random() < MUTATION_PRBLTY:
-            mask   = 1 << random.choice([0])
-            wght_a = mask ^ wght_a
-                    
-        if random.random() < MUTATION_PRBLTY:
-                    mask   = 1 << random.choice([0])
-                    wght_b = mask ^ wght_b
-                    
-        conns_a.append(wght_a)
-        conns_b.append(wght_b)
+    snake = None
+    with open("best_snake.snk",'rb') as file:
+        snake = pickle.load(file)    
     
-    return (conns_a,conns_b)
-
-def replay_movement(snake:'Snake',food:'Food',screen:'curses._CursesWindow'):
-    count = 5000
-    while snake.alive or count < 0:
+    snake.reset_body()
+    food = snake.food
+    
+    screen_height,screen_width = screen.getmaxyx()
+    
+    snake.limity = screen_height - 1
+    snake.limitx = screen_width - 1
+    
+    food.world_height = screen_height - 1
+    food.world_width  = screen_width - 1
+    food.reset_position()
+    
+    screen.nodelay(True)
+    curses.curs_set(0)
+    
+    while snake.alive:
         screen.clear()
         key = screen.getch()
         if key == ord('q') or key == ord('Q'):
@@ -344,116 +322,12 @@ def replay_movement(snake:'Snake',food:'Food',screen:'curses._CursesWindow'):
         snake.draw(screen)   
         screen.refresh()
         time.sleep(0.05)
-        count-=1   
-
-def main(screen: 'curses._CursesWindow'):
-    train_loop_running = True
-    generation_count   = 0
-    best_snake_size    = 0
-
-    screen_height,screen_width = screen.getmaxyx()
-    
-    if screen_height < MIN_SCRN_HEIGHT:
-        train_loop_running = False
-        screen.addstr(f"Screen Height less than required (min_height:{MIN_SCRN_HEIGHT}). Press any key to exit")
-        screen.getkey()
-    if screen_width < MIN_SCRN_WIDTH:
-        train_loop_running = False
-        screen.addstr(f"Screen Width less than required (min_width:{MIN_SCRN_WIDTH}). Press any key to exit")
-        screen.getkey()
-    
-    # Disable delay for getch and set cursor visibility to 0
-    screen.nodelay(True)
-    curses.curs_set(0)
-    
-    foods  = [Food(screen_height-1,screen_width-1) for _ in range(MAX_POPULATION)]                  # Food for each unique snake used for training
-    snakes = [Snake(str(i),foods[i],screen_height-1,screen_width-1) for i in range(MAX_POPULATION)] # Population of snakes to be used for training
-    
-    while train_loop_running:
         
-        # Reinitialize new food for new generations 
-        if generation_count != 0:
-            foods = [Food(screen_height-1,screen_width-1) for _ in range(MAX_POPULATION)]
-            for i,snake in enumerate(snakes):
-                snake.food = foods[i]
         
-        # Make snakes perceive and move about in the environment
-        with Pool(CPU_POOL_SIZE) as pool:
-            new_snakes = pool.map(interact,snakes)
-        
-        # Fitness based sorting and elimination of the population
-        new_snakes = sorted(new_snakes,key = lambda x : len(x)**4-x.penalty,reverse=True)[:FIT_POPULATION]
-        
-        # Elitism - selecting the top players directly to next generation
-        snakes              = []
-        snakes[:ELITE_GUYS] = new_snakes[:ELITE_GUYS]
-        
-        # Getting data of current generation's best snake
-        best_snake       = snakes[0] 
-        best_snks_food   = best_snake.food
-        best_snake.debug = True
-        best_snake.log("")
-        best_snake.log("+-------------------------------------------------------------------------+")
-        best_snake.log(f"Snake {best_snake.id} Neural :")
-        best_snake.log("")
-        best_snake.log(f"   {best_snake.neural_connections}")
-        best_snake.log("")
-        best_snks_food.reset_position()
-        
-        # Crossover and mutate from new population till MAX_POPULATION is reached for next generation
-        while len(snakes)<MAX_POPULATION:
-            snake_a = random.choice(new_snakes)
-            snake_b = random.choice(new_snakes)
-            
-            connections = crossover_and_mutate(snake_a,snake_b)
-                
-            snake_a.set_connections(connections[0])
-            snake_b.set_connections(connections[1])
-            
-            snakes.append(snake_a)
-                
-            if len(snakes) < MAX_POPULATION:
-                snakes.append(snake_b)
-        
-        # Print data of the top 10 new snakes
-        screen.clear()
-        for i in range(10):
-            screen.addstr(i,0,f"Size : {len(snakes[i].body)}")
-            screen.addstr(i,20,f"Penalty : {snakes[i].penalty}")
-            screen.addstr(i,40,f"ID : {snakes[i].id}")
-        
-        screen.addstr(screen_height-2,0,f"Generation: {generation_count}")
-        generation_count+=1
-        screen.refresh()
-        
-        # Reset bodies of mutated snakes for next generation
-        for snake in snakes:
-            snake.reset_body()
-        
-        time.sleep(2)
-        
-        # Replay of current generation's best snake
-        replay_movement(best_snake,best_snks_food,screen)
-
-        time.sleep(2)
-        screen.clear()
-        
-        # Save best_snake if current length defeats previous record
-        if len(best_snake.body)>best_snake_size:
-            best_snake_size = len(best_snake.body)
-            with open('best_snake.snk','wb') as file:
-                pickle.dump(best_snake,file)    
-            best_snake.log(f"Snake {best_snake.id} Saved")
-        
-        best_snake.debug = False    # Resets the best snake debug mode
-        
-        screen.addstr(f"Processing Generation {generation_count+1}")
-        screen.refresh()
-
 if __name__ == '__main__':
-    input("Starting Snakevolution-CLI (Evolving-Train) .... Press Enter to continue ")
+    input("Starting Snakevolution-CLI (Evolving-Test) .... Press Enter to continue ")
     
     # Wrapper for curses intialization and auto de-initialize
-    curses_wrap(main)                  
+    curses_wrap(main)
     
     print("Program has terminated")
