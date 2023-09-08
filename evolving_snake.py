@@ -10,17 +10,16 @@ from   curses import wrapper as curses_wrap
 MIN_SCRN_HEIGHT = 25
 MIN_SCRN_WIDTH  = 80
 
-MAX_POPULATION  = 30000
-FIT_POPULATION  = 15000
-ELITE_GUYS      = 5000
-GEN_STEPS       = 3000
+MAX_POPULATION  = 100000
+FIT_POPULATION  = 5000
+ELITE_GUYS      = 1000
+GEN_STEPS       = 1000
 MUTATION_PRBLTY = 0.45
 
-MAX_CONN_WGHT   = 32
+MAX_CONN_WGHT   = 64
 CONNECTIONS_CNT = 30
 
-class Snake:    
-    
+class Snake:
     def __generate_body(self,world_height,world_width,length,direction):
         headx = random.randint(length,world_width-1)
         heady = random.randint(length,world_height-1)
@@ -80,7 +79,7 @@ class Snake:
         self.obstacle_rgt       = 0 
         self.distance_foodx     = 0
         self.distance_foody     = 0
-        self.neural_connections = [random.randint(0,MAX_CONN_WGHT) for _ in range(CONNECTIONS_CNT)]
+        self.neural_connections = [random.randint(-MAX_CONN_WGHT,MAX_CONN_WGHT) for _ in range(CONNECTIONS_CNT)]
         
     def __len__(self):
         return len(self.body)
@@ -155,8 +154,6 @@ class Snake:
         o2 = self.neural_connections[21]*z1 + self.neural_connections[22]*z2 + self.neural_connections[23]*z3
         o3 = self.neural_connections[24]*z1 + self.neural_connections[25]*z2 + self.neural_connections[26]*z3
         o4 = self.neural_connections[27]*z1 + self.neural_connections[28]*z2 + self.neural_connections[28]*z3
-        
-        
         
         # o1 = self.__sigmoid(self.neural_connections[ 0]*x0 + self.neural_connections[ 1]*x1 + self.neural_connections[ 2]*x2 + self.neural_connections[ 3]*x3 + self.neural_connections[ 4]*x4 + self.neural_connections[ 5]*x5)
         # o2 = self.__sigmoid(self.neural_connections[ 6]*x0 + self.neural_connections[ 7]*x1 + self.neural_connections[ 8]*x2 + self.neural_connections[ 9]*x3 + self.neural_connections[10]*x4 + self.neural_connections[11]*x5)
@@ -307,7 +304,7 @@ def main(screen: 'curses._CursesWindow'):
         with Pool(6) as pool:
             new_snakes = pool.map(run,snakes)
         
-        new_snakes = sorted(new_snakes,key = lambda x : x.life*int(x.alive),reverse=True)
+        new_snakes = sorted(new_snakes,key = lambda x : int(x.alive),reverse=True)
         new_snakes = sorted(new_snakes,key = lambda x : len(x),reverse=True)[:FIT_POPULATION]
         
         snakes              = []
@@ -341,11 +338,11 @@ def main(screen: 'curses._CursesWindow'):
                 wght_b = wght_b | last2_bits_a
                 
                 if random.random() < MUTATION_PRBLTY:
-                    mask   = 1 << random.choice([0])
+                    mask   = 1 << random.choice([0,1])
                     wght_a = mask ^ wght_a
                     
                 if random.random() < MUTATION_PRBLTY:
-                    mask   = 1 << random.choice([0])
+                    mask   = 1 << random.choice([0,1])
                     wght_b = mask ^ wght_b
                     
                 conns_a.append(wght_a)
