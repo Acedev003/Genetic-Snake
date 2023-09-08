@@ -13,11 +13,11 @@ MIN_SCRN_WIDTH  = 80
 
 MAX_POPULATION  = 100000
 FIT_POPULATION  = 10000
-ELITE_GUYS      = 1000
+ELITE_GUYS      = 3000
 GEN_STEPS       = 1000
-MUTATION_PRBLTY = 0.45
+MUTATION_PRBLTY = 0.50
 
-MAX_CONN_WGHT   = 64
+MAX_CONN_WGHT   = 32
 CONNECTIONS_CNT = 30
 
 class Snake:
@@ -42,7 +42,7 @@ class Snake:
             return 1/(1+math.exp(-x))
         except(OverflowError):
             return float('inf')
-        
+    
     def __log(self,msg):
         if not self.debug:
             return
@@ -100,22 +100,22 @@ class Snake:
         self.distance_foodx = headx - self.food.position[1]
     
         if heady-1 < 0 or (heady-1,headx) in self.body:
-            self.obstacle_top = 1
+            self.obstacle_top = 0.1
         else:
             self.obstacle_top = 0
         
         if heady+1 > self.limity-1 or (heady+1,headx) in self.body:
-            self.obstacle_dwn = 1
+            self.obstacle_dwn = 0.1
         else:
             self.obstacle_dwn = 0
             
         if headx-1 < 0 or (heady,headx-1) in self.body:
-            self.obstacle_lft = 1
+            self.obstacle_lft = 0.1
         else:
             self.obstacle_lft = 0
             
         if headx+1 > self.limitx-1 or (heady,headx+1) in self.body:
-            self.obstacle_rgt = 1
+            self.obstacle_rgt = 0.1
         else:
             self.obstacle_rgt = 0
             
@@ -125,7 +125,8 @@ class Snake:
         
         if self.life<1:
             self.__log(f"Snake {self.id} Dead   : No life")
-            self.alive=False
+            self.penalty = 1000
+            self.alive   = False
             return
         
         #x0 = (self.distance_foody+self.limity)/(2*(self.limity-1))
@@ -220,7 +221,7 @@ class Snake:
         
         if body[0] in body[1:]: 
             self.__log(f"Snake {self.id} Dead   : Ate itself")
-            self.penalty = 1000
+            self.penalty = 10000
             self.alive = False
             return
         
@@ -310,7 +311,7 @@ def main(screen: 'curses._CursesWindow'):
             new_snakes = pool.map(run,snakes)
         
         #new_snakes = sorted(new_snakes,key = lambda x : int(x.alive),reverse=True)
-        new_snakes = sorted(new_snakes,key = lambda x : len(x)-x.penalty,reverse=True)[:FIT_POPULATION]
+        new_snakes = sorted(new_snakes,key = lambda x : len(x)**4-x.penalty,reverse=True)[:FIT_POPULATION]
         
         snakes              = []
         snakes[:ELITE_GUYS] = new_snakes[:ELITE_GUYS]
@@ -323,7 +324,7 @@ def main(screen: 'curses._CursesWindow'):
         
         food.reset_position()
         
-        new_snakes = new_snakes[:ELITE_GUYS+100]
+        new_snakes = new_snakes[:ELITE_GUYS+200]
         
         while len(snakes)<MAX_POPULATION:
             snake_a = random.choice(new_snakes)
@@ -333,21 +334,21 @@ def main(screen: 'curses._CursesWindow'):
             conns_b = []
             
             for wght_a,wght_b in zip(snake_a.neural_connections,snake_b.neural_connections):
-                last2_bits_a = wght_a & 2
-                last2_bits_b = wght_b & 2
+                last2_bits_a = wght_a & 1
+                last2_bits_b = wght_b & 1
                 
-                wght_a = (wght_a >> 2) << 2
-                wght_b = (wght_b >> 2) << 2
+                wght_a = (wght_a >> 1) << 1
+                wght_b = (wght_b >> 1) << 1
                 
                 wght_a = wght_a | last2_bits_b
                 wght_b = wght_b | last2_bits_a
                 
                 if random.random() < MUTATION_PRBLTY:
-                    mask   = 1 << random.choice([0,1])
+                    mask   = 1 << random.choice([0])
                     wght_a = mask ^ wght_a
                     
                 if random.random() < MUTATION_PRBLTY:
-                    mask   = 1 << random.choice([0,1])
+                    mask   = 1 << random.choice([0])
                     wght_b = mask ^ wght_b
                     
                 conns_a.append(wght_a)
