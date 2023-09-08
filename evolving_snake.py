@@ -12,7 +12,7 @@ MIN_SCRN_HEIGHT = 25
 MIN_SCRN_WIDTH  = 80
 
 MAX_POPULATION  = 100000
-FIT_POPULATION  = 5000
+FIT_POPULATION  = 10000
 ELITE_GUYS      = 1000
 GEN_STEPS       = 1000
 MUTATION_PRBLTY = 0.45
@@ -71,6 +71,7 @@ class Snake:
         
         self.id        = id
         self.life      = 500
+        self.penalty   = 0
         self.food      = food
         self.body      = self.__generate_body(world_height,world_width,self.def_length,self.direction)
         
@@ -213,11 +214,13 @@ class Snake:
             
         if body[0][0] < 0 or body[0][0] > self.limity-1 or body[0][1] < 0 or body[0][1] > self.limitx-1:
             self.__log(f"Snake {self.id} Dead   : Wall collision")
-            self.alive = False
+            self.penalty = 100
+            self.alive   = False
             return
         
         if body[0] in body[1:]: 
             self.__log(f"Snake {self.id} Dead   : Ate itself")
+            self.penalty = 1000
             self.alive = False
             return
         
@@ -303,11 +306,11 @@ def main(screen: 'curses._CursesWindow'):
             for i,snake in enumerate(snakes):
                 snake.food = foods[i]
         
-        with Pool(6) as pool:
+        with Pool(10) as pool:
             new_snakes = pool.map(run,snakes)
         
-        new_snakes = sorted(new_snakes,key = lambda x : int(x.alive),reverse=True)
-        new_snakes = sorted(new_snakes,key = lambda x : len(x),reverse=True)[:FIT_POPULATION]
+        #new_snakes = sorted(new_snakes,key = lambda x : int(x.alive),reverse=True)
+        new_snakes = sorted(new_snakes,key = lambda x : len(x)-x.penalty,reverse=True)[:FIT_POPULATION]
         
         snakes              = []
         snakes[:ELITE_GUYS] = new_snakes[:ELITE_GUYS]
