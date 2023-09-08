@@ -10,13 +10,14 @@ from   curses import wrapper as curses_wrap
 MIN_SCRN_HEIGHT = 25
 MIN_SCRN_WIDTH  = 80
 
-MAX_POPULATION  = 20000
-FIT_POPULATION  = 5000
-ELITE_GUYS      = 2000
-GEN_STEPS       = 1000
-MUTATION_PRBLTY = 0.4
+MAX_POPULATION  = 30000
+FIT_POPULATION  = 15000
+ELITE_GUYS      = 5000
+GEN_STEPS       = 3000
+MUTATION_PRBLTY = 0.45
 
-MAX_CONN_WGHT   = 15
+MAX_CONN_WGHT   = 32
+CONNECTIONS_CNT = 30
 
 class Snake:    
     
@@ -43,6 +44,9 @@ class Snake:
             return float('inf')
         
     def __log(self,msg):
+        if not self.debug:
+            return
+        
         file = open("log.txt",'a+')
         file.writelines([str(msg)+"\n"])
         file.close()
@@ -63,8 +67,10 @@ class Snake:
                                          self.DIR_LFT,
                                          self.DIR_RGT,
                                          self.DIR_UP])
+        self.debug     = False
         
         self.id        = id
+        self.life      = 500
         self.food      = food
         self.body      = self.__generate_body(world_height,world_width,self.def_length,self.direction)
         
@@ -74,7 +80,7 @@ class Snake:
         self.obstacle_rgt       = 0 
         self.distance_foodx     = 0
         self.distance_foody     = 0
-        self.neural_connections = [random.randint(0,MAX_CONN_WGHT) for _ in range(30)]
+        self.neural_connections = [random.randint(0,MAX_CONN_WGHT) for _ in range(CONNECTIONS_CNT)]
         
     def __len__(self):
         return len(self.body)
@@ -92,41 +98,47 @@ class Snake:
         self.distance_foody = heady - self.food.position[0]
         self.distance_foodx = headx - self.food.position[1]
     
-        if heady-1 < 0 or (headx,heady-1) in self.body:
-            self.obstacle_top = 1
+        if heady-1 < 0 or (heady-1,headx) in self.body:
+            self.obstacle_top = 0.1
         else:
             self.obstacle_top = 0
-            
-        if heady+1 > self.limity-1 or (headx,heady+1) in self.body:
-            self.obstacle_dwn = 1
+        
+        if heady+1 > self.limity-1 or (heady+1,headx) in self.body:
+            self.obstacle_dwn = 0.1
         else:
             self.obstacle_dwn = 0
             
-        if headx-1 < 0 or (headx-1,heady) in self.body:
-            self.obstacle_lft = 1
+        if headx-1 < 0 or (heady,headx-1) in self.body:
+            self.obstacle_lft = 0.1
         else:
             self.obstacle_lft = 0
             
-        if headx+1 > self.limitx-1 or (headx+1,heady) in self.body:
-            self.obstacle_rgt = 1
+        if headx+1 > self.limitx-1 or (heady,headx+1) in self.body:
+            self.obstacle_rgt = 0.1
         else:
             self.obstacle_rgt = 0
             
-    def move(self,debug = False):
+    def move(self):
         if not self.alive:
             return
         
-        x0 = self.distance_foodx/(self.limitx-1)
-        x1 = self.distance_foody/(self.limity-1)
+        if self.life<1:
+            self.__log(f"Snake {self.id} Dead   : No life")
+            self.alive=False
+            return
+        
+        x0 = (self.distance_foody+self.limity)/(2*(self.limity-1))
+        x1 = (self.distance_foodx+self.limitx)/(2*(self.limitx-1))
         x2 = self.obstacle_top
         x3 = self.obstacle_dwn
         x4 = self.obstacle_rgt
         x5 = self.obstacle_lft
+        x6 = self.life/500
 
-        if debug:    
-            self.__log([x0,x1,x2,x3,x4,x5])
-            self.__log(self.body[0])
-            self.__log(self.body)
+          
+        self.__log(f"Snake {self.id} Inputs : {[x0,x1,x2,x3,x4,x5]}")
+        self.__log(f"Snake {self.id} Body   : {self.body}")
+
         
         z1 = self.neural_connections[ 0]*x0 + self.neural_connections[ 1]*x1 + self.neural_connections[ 2]*x2 + self.neural_connections[ 3]*x3 + self.neural_connections[ 4]*x4 + self.neural_connections[ 5]*x5
         z2 = self.neural_connections[ 6]*x0 + self.neural_connections[ 7]*x1 + self.neural_connections[ 8]*x2 + self.neural_connections[ 9]*x3 + self.neural_connections[10]*x4 + self.neural_connections[11]*x5
@@ -136,6 +148,16 @@ class Snake:
         o2 = self.__sigmoid(self.neural_connections[21]*z1 + self.neural_connections[22]*z2 + self.neural_connections[23]*z3)
         o3 = self.__sigmoid(self.neural_connections[24]*z1 + self.neural_connections[25]*z2 + self.neural_connections[26]*z3)
         o4 = self.__sigmoid(self.neural_connections[27]*z1 + self.neural_connections[28]*z2 + self.neural_connections[28]*z3)
+        
+        # o1 = self.__sigmoid(self.neural_connections[ 0]*x0 + self.neural_connections[ 1]*x1 + self.neural_connections[ 2]*x2 + self.neural_connections[ 3]*x3 + self.neural_connections[ 4]*x4 + self.neural_connections[ 5]*x5)
+        # o2 = self.__sigmoid(self.neural_connections[ 6]*x0 + self.neural_connections[ 7]*x1 + self.neural_connections[ 8]*x2 + self.neural_connections[ 9]*x3 + self.neural_connections[10]*x4 + self.neural_connections[11]*x5)
+        # o3 = self.__sigmoid(self.neural_connections[12]*x0 + self.neural_connections[13]*x1 + self.neural_connections[14]*x2 + self.neural_connections[15]*x3 + self.neural_connections[16]*x4 + self.neural_connections[17]*x5)  
+        # o4 = self.__sigmoid(self.neural_connections[18]*x0 + self.neural_connections[19]*x1 + self.neural_connections[20]*x2 + self.neural_connections[21]*x3 + self.neural_connections[22]*x4 + self.neural_connections[23]*x5)
+        
+        # o1 = self.__sigmoid(self.neural_connections[ 0]*x0 + self.neural_connections[ 1]*x1 + self.neural_connections[ 2]*x2 + self.neural_connections[ 3]*x3 + self.neural_connections[ 4]*x4 + self.neural_connections[ 5]*x5 + self.neural_connections[ 6]*x6)
+        # o2 = self.__sigmoid(self.neural_connections[ 7]*x0 + self.neural_connections[ 9]*x1 + self.neural_connections[ 9]*x2 + self.neural_connections[10]*x3 + self.neural_connections[11]*x4 + self.neural_connections[12]*x5 + self.neural_connections[13]*x6)
+        # o3 = self.__sigmoid(self.neural_connections[14]*x0 + self.neural_connections[15]*x1 + self.neural_connections[16]*x2 + self.neural_connections[17]*x3 + self.neural_connections[18]*x4 + self.neural_connections[19]*x5 + self.neural_connections[20]*x6)
+        # o4 = self.__sigmoid(self.neural_connections[21]*x0 + self.neural_connections[22]*x1 + self.neural_connections[23]*x2 + self.neural_connections[24]*x3 + self.neural_connections[25]*x4 + self.neural_connections[26]*x5 + self.neural_connections[27]*x6)
         
         index = [o1,o2,o3,o4].index(max([o1,o2,o3,o4]))
         
@@ -172,17 +194,25 @@ class Snake:
             body.append(bone)
             
         if grow:
+            self.life=500
             body.append(self.body[-1])
             self.food.change_position(self)
             
+        if body[0][0] < 0 or body[0][0] > self.limity-1 or body[0][1] < 0 or body[0][1] > self.limitx-1:
+            self.__log(f"Snake {self.id} Dead   : Wall collision")
+            self.alive = False
+            return
+        
+        if body[0] in body[1:]: 
+            self.__log(f"Snake {self.id} Dead   : Ate itself")
+            self.alive = False
+            return
+        
         self.body = body        
         self.step_count+=1
+        self.life-=1
         
-        if self.body[0][0] < 0 or self.body[0][0] > self.limity-1 or self.body[0][1] < 0 or self.body[0][1] > self.limitx-1:
-            self.alive = False
         
-        if self.body[0] in self.body[1:]: 
-            self.alive = False
         
     def draw(self,screen: 'curses._CursesWindow'):
         if not self.alive:
@@ -191,6 +221,7 @@ class Snake:
             screen.addch(bone[0],bone[1],'#')
         
     def reset_body(self):
+        self.life       = 500
         self.step_count = 0
         self.alive      = True
         self.body       = self.__generate_body(self.limity,self.limitx,self.def_length,self.direction)
@@ -221,7 +252,7 @@ class Food:
             self.position = (random.randint(0,self.world_height-1),random.randint(0,self.world_width-1))
     
     def draw(self,screen: 'curses._CursesWindow'):
-        screen.addch(self.position[0],self.position[1],'O')
+        screen.addch(self.position[0],self.position[1],'0')
             
 def run(snake:'Snake'):
     for _ in range(GEN_STEPS):
@@ -229,8 +260,7 @@ def run(snake:'Snake'):
         snake.move()
     
     return snake
-        
-        
+           
 def main(screen: 'curses._CursesWindow'):
     running = True
     gen     = 0
@@ -252,23 +282,31 @@ def main(screen: 'curses._CursesWindow'):
     snakes = None
     
     while running:
-        foods = [Food(maxy-1,maxx-1) for i in range(MAX_POPULATION)]
+        foods = [Food(maxy-1,maxx-1) for _ in range(MAX_POPULATION)]
         if snakes is None:
             snakes = [Snake(str(i),foods[i],maxy-1,maxx-1) for i in range(MAX_POPULATION)]
         else:
             for i,snake in enumerate(snakes):
                 snake.food = foods[i]
         
-        with Pool(4) as pool:
+        with Pool(6) as pool:
             new_snakes = pool.map(run,snakes)
         
-        new_snakes = sorted(new_snakes,key = lambda x : x.step_count,reverse=True)
+        new_snakes = sorted(new_snakes,key = lambda x : x.life,reverse=True)
         new_snakes = sorted(new_snakes,key = lambda x : len(x),reverse=True)[:FIT_POPULATION]
         
         snakes              = []
         snakes[:ELITE_GUYS] = new_snakes[:ELITE_GUYS]
         
-        new_snakes = new_snakes[:ELITE_GUYS]
+        best_snake = snakes[0] 
+        food       = best_snake.food
+        
+        best_snake.debug = True
+        best_snake.log(f"Snake {best_snake.id} Neural : {best_snake.neural_connections}")
+        
+        food.reset_position()
+        
+        new_snakes = new_snakes[:ELITE_GUYS+100]
         
         while len(snakes)<MAX_POPULATION:
             snake_a = random.choice(new_snakes)
@@ -278,11 +316,11 @@ def main(screen: 'curses._CursesWindow'):
             conns_b = []
             
             for wght_a,wght_b in zip(snake_a.neural_connections,snake_b.neural_connections):
-                last2_bits_a = wght_a & 2
-                last2_bits_b = wght_b & 2
+                last2_bits_a = wght_a & 1
+                last2_bits_b = wght_b & 1
                 
-                wght_a = (wght_a >> 2) << 2
-                wght_b = (wght_b >> 2) << 2
+                wght_a = (wght_a >> 1) << 1
+                wght_b = (wght_b >> 1) << 1
                 
                 wght_a = wght_a | last2_bits_b
                 wght_b = wght_b | last2_bits_a
@@ -318,25 +356,27 @@ def main(screen: 'curses._CursesWindow'):
         for snake in snakes:
             snake.reset_body()
         
-        time.sleep(4)
+        time.sleep(2)
         
-        best_snake = snakes[0] 
-        food       = best_snake.food
-        best_snake.log(best_snake.neural_connections)
         
-        food.reset_position()
-        
-        while best_snake.alive:
+        count = 5000
+        while best_snake.alive or count < 0:
             screen.clear()
+            key = screen.getch()
+            if key == ord('q') or key == ord('Q'):
+                best_snake.alive=False
+                
             food.draw(screen)
             best_snake.perceive()
-            best_snake.move(True)  
+            best_snake.move()  
             best_snake.draw(screen)   
             screen.refresh()
-            time.sleep(0.09)   
+            time.sleep(0.05)
+            count-=1   
         
         time.sleep(2)
         screen.clear()
+        screen.addstr("Processing . . . .")
         screen.refresh()
 
 if __name__ == '__main__':
