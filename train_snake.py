@@ -22,7 +22,7 @@ CONNECTIONS_CNT = 30
 
 CPU_POOL_SIZE    = 4
 
-SNAKE_LIFE = 500
+SNAKE_LIFE = 1000
 START_SIZE = 3
 
 FOOD_CHAR  = "@"
@@ -219,7 +219,7 @@ class Snake:
             body.append(bone)
             
         if grow:
-            self.life=500
+            self.life=SNAKE_LIFE
             body.append(self.body[-1])
             self.food.change_position(self)
         
