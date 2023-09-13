@@ -169,7 +169,7 @@ class Snake:
         o1 = self.neural_connections[18]*z1 + self.neural_connections[19]*z2 + self.neural_connections[20]*z3
         o2 = self.neural_connections[21]*z1 + self.neural_connections[22]*z2 + self.neural_connections[23]*z3
         o3 = self.neural_connections[24]*z1 + self.neural_connections[25]*z2 + self.neural_connections[26]*z3
-        o4 = self.neural_connections[27]*z1 + self.neural_connections[28]*z2 + self.neural_connections[28]*z3
+        o4 = self.neural_connections[27]*z1 + self.neural_connections[28]*z2 + self.neural_connections[29]*z3
         
         # Alternate network with 24 neurons
         # o1 = self.__sigmoid(self.neural_connections[ 0]*x0 + self.neural_connections[ 1]*x1 + self.neural_connections[ 2]*x2 + self.neural_connections[ 3]*x3 + self.neural_connections[ 4]*x4 + self.neural_connections[ 5]*x5)
