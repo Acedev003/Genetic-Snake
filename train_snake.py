@@ -376,16 +376,18 @@ def main(screen: 'curses._CursesWindow'):
     screen.nodelay(True)
     curses.curs_set(0)
     
-    foods  = [Food(screen_height-1,screen_width-1) for _ in range(MAX_POPULATION)]                  # Food for each unique snake used for training
-    snakes = [Snake(str(i),foods[i],screen_height-1,screen_width-1) for i in range(MAX_POPULATION)] # Population of snakes to be used for training
+    #foods  = [Food(screen_height-1,screen_width-1) for _ in range(MAX_POPULATION)]                  # Food for each unique snake used for training
+    food   = Food(screen_height-1,screen_width-1)
+    snakes = [Snake(str(i),copy.deepcopy(food),screen_height-1,screen_width-1) for i in range(MAX_POPULATION)] # Population of snakes to be used for training
     
     while train_loop_running:
         
         # Reinitialize new food for new generations 
         if generation_count != 0:
-            foods = [Food(screen_height-1,screen_width-1) for _ in range(MAX_POPULATION)]
+            #foods = [Food(screen_height-1,screen_width-1) for _ in range(MAX_POPULATION)]
+            food = Food(screen_height-1,screen_width-1)
             for i,snake in enumerate(snakes):
-                snake.food = foods[i]
+                snake.food = copy.deepcopy(food)
         
         # Make snakes perceive and move about in the environment
         with Pool(CPU_POOL_SIZE) as pool:
@@ -393,6 +395,7 @@ def main(screen: 'curses._CursesWindow'):
         
         # Fitness based sorting and elimination of the population
         new_snakes = sorted(new_snakes,key = lambda x : x.step_count)
+        new_snakes = sorted(new_snakes,key = lambda x : x.penalty)
         new_snakes = sorted(new_snakes,key = lambda x : len(x),reverse=True)[:FIT_POPULATION]
         
         # Elitism - selecting the top players directly to next generation
@@ -448,8 +451,7 @@ def main(screen: 'curses._CursesWindow'):
             # Replay of current generation's best snake
             replay_movement(best_snake,best_snks_food,screen)
             
-            time.sleep(2)
-        
+        time.sleep(2)
         screen.clear()
         
         # Save best_snake if current length defeats previous record
