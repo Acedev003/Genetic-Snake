@@ -23,7 +23,7 @@ CONNECTIONS_CNT = 30
 
 CPU_POOL_SIZE    = 4
 
-SNAKE_LIFE = 500
+SNAKE_LIFE = 2000
 START_SIZE = 3
 
 FOOD_CHAR  = "@"
@@ -118,22 +118,22 @@ class Snake:
         self.distance_foodx = headx - self.food.position[1]
     
         if heady-1 < 0 or (heady-1,headx) in self.body:
-            self.obstacle_top = 0.1
+            self.obstacle_top = 1
         else:
             self.obstacle_top = 0
         
         if heady+1 > self.limity-1 or (heady+1,headx) in self.body:
-            self.obstacle_dwn = 0.1
+            self.obstacle_dwn = 1
         else:
             self.obstacle_dwn = 0
             
         if headx-1 < 0 or (heady,headx-1) in self.body:
-            self.obstacle_lft = 0.1
+            self.obstacle_lft = 1
         else:
             self.obstacle_lft = 0
             
         if headx+1 > self.limitx-1 or (heady,headx+1) in self.body:
-            self.obstacle_rgt = 0.1
+            self.obstacle_rgt = 1
         else:
             self.obstacle_rgt = 0
             
@@ -145,7 +145,7 @@ class Snake:
         # Died due to not eating for long
         if self.life < 1:
             self.__log(f"Snake {self.id} Dead   : No life")
-            self.penalty = 1000
+            self.penalty = 9998
             self.alive   = False
             return
         
@@ -229,7 +229,7 @@ class Snake:
         # Wall Collision Check
         if body[0][0] < 0 or body[0][0] > self.limity-1 or body[0][1] < 0 or body[0][1] > self.limitx-1:
             self.__log(f"Snake {self.id} Dead   : Wall collision")
-            self.penalty = 100
+            self.penalty = 9999
             self.alive   = False
             return
         
@@ -392,6 +392,7 @@ def main(screen: 'curses._CursesWindow'):
             new_snakes = pool.map(interact,snakes)
         
         # Fitness based sorting and elimination of the population
+        new_snakes = sorted(new_snakes,key = lambda x : x.step_count)
         new_snakes = sorted(new_snakes,key = lambda x : len(x),reverse=True)[:FIT_POPULATION]
         
         # Elitism - selecting the top players directly to next generation
@@ -441,12 +442,14 @@ def main(screen: 'curses._CursesWindow'):
         for snake in snakes:
             snake.reset_body()
         
-        time.sleep(2)
-        
-        # Replay of current generation's best snake
-        replay_movement(best_snake,best_snks_food,screen)
+        if generation_count > 20:
+            time.sleep(2)
 
-        time.sleep(2)
+            # Replay of current generation's best snake
+            replay_movement(best_snake,best_snks_food,screen)
+            
+            time.sleep(2)
+        
         screen.clear()
         
         # Save best_snake if current length defeats previous record
@@ -458,7 +461,7 @@ def main(screen: 'curses._CursesWindow'):
         
         best_snake.debug = False    # Resets the best snake debug mode
         
-        screen.addstr(f"Processing Generation {generation_count+1}")
+        screen.addstr(f"Processing Generation {generation_count}")
         screen.refresh()
 
 if __name__ == '__main__':
