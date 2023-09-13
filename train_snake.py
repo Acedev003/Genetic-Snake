@@ -256,6 +256,7 @@ class Snake:
     def reset_body(self):
         self.life       = SNAKE_LIFE
         self.step_count = 0
+        self.penalty    = 0
         self.alive      = True
         self.body       = self.__generate_body(self.limity,self.limitx,self.def_length,self.initial_direction)
     
