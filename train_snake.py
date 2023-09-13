@@ -310,14 +310,14 @@ def crossover_and_mutate(snake_a:'Snake',snake_b:'Snake'):
             
     for wght_a,wght_b in zip(snake_a.neural_connections,snake_b.neural_connections):
 
-        # Crossover utility disabled as it caused worse results. (slow increment in performance)
+        # Crossover
         
-        # last2_bits_a = wght_a &
-        # last2_bits_b = wght_b &
-        # wght_a = (wght_a >> 2) <<
-        # wght_b = (wght_b >> 2) <<
-        # wght_a = wght_a | last2_bits
-        # wght_b = wght_b | last2_bits_a
+        last2_bits_a = wght_a & 2
+        last2_bits_b = wght_b & 2
+        wght_a = (wght_a >> 2) << 2
+        wght_b = (wght_b >> 2) << 2
+        wght_a = wght_a | last2_bits_b
+        wght_b = wght_b | last2_bits_a
                 
         # Mutation by random flipping of a bit
         if random.random() < MUTATION_PRBLTY:
@@ -412,8 +412,8 @@ def main(screen: 'curses._CursesWindow'):
         
         # Crossover and mutate from new population till MAX_POPULATION is reached for next generation
         while len(snakes)<MAX_POPULATION:
-            snake_a = random.choice(new_snakes)
-            snake_b = random.choice(new_snakes)
+            snake_a = copy.deepcopy(random.choice(new_snakes))
+            snake_b = copy.deepcopy(random.choice(new_snakes))
             
             connections = crossover_and_mutate(snake_a,snake_b)
                 
