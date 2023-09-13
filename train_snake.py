@@ -322,11 +322,11 @@ def crossover_and_mutate(snake_a:'Snake',snake_b:'Snake'):
                 
         # Mutation by random flipping of a bit
         if random.random() < MUTATION_PRBLTY:
-            mask   = 1 << random.choice([0])
+            mask   = 1 << random.choice([0,1,2])
             wght_a = mask ^ wght_a
                     
         if random.random() < MUTATION_PRBLTY:
-                    mask   = 1 << random.choice([0])
+                    mask   = 1 << random.choice([0,1,2])
                     wght_b = mask ^ wght_b
                     
         conns_a.append(wght_a)
@@ -392,7 +392,7 @@ def main(screen: 'curses._CursesWindow'):
             new_snakes = pool.map(interact,snakes)
         
         # Fitness based sorting and elimination of the population
-        new_snakes = sorted(new_snakes,key = lambda x : len(x)**4-x.penalty,reverse=True)[:FIT_POPULATION]
+        new_snakes = sorted(new_snakes,key = lambda x : len(x),reverse=True)[:FIT_POPULATION]
         
         # Elitism - selecting the top players directly to next generation
         snakes  = []
