@@ -1,3 +1,4 @@
+import copy
 import math
 import time
 import random
@@ -393,12 +394,13 @@ def main(screen: 'curses._CursesWindow'):
         new_snakes = sorted(new_snakes,key = lambda x : len(x)**4-x.penalty,reverse=True)[:FIT_POPULATION]
         
         # Elitism - selecting the top players directly to next generation
-        snakes              = []
-        snakes[:ELITE_GUYS] = new_snakes[:ELITE_GUYS]
+        snakes  = []
+        snakes += new_snakes[:ELITE_GUYS]
         
         # Getting data of current generation's best snake
-        best_snake       = snakes[0] 
+        best_snake       = copy.deepcopy(snakes[0])
         best_snks_food   = best_snake.food
+        best_snake.reset_body()
         best_snake.debug = True
         best_snake.log("")
         best_snake.log("+-------------------------------------------------------------------------+")
