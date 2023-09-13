@@ -49,12 +49,12 @@ class Snake:
         if (direction == self.DIR_RGT):
             return [(heady,headx-i)for i in range(length)]
     
-    # Sigmoid function - buggy
-    def __sigmoid(self,x):
-        try:
-            return 1/(1+math.exp(-x))
-        except(OverflowError):
-            return float('inf')
+    #softmax function    
+    def __softmax(self,x:list):
+        x       = [val-max(x) for val in x]
+        exp_val = [ math.exp(val) for val in x ]
+        denom   = sum(exp_val)
+        return [x/denom for x in exp_val]
     
     # Helper Logging utility
     def __log(self,msg):
@@ -170,6 +170,8 @@ class Snake:
         o2 = self.neural_connections[21]*z1 + self.neural_connections[22]*z2 + self.neural_connections[23]*z3
         o3 = self.neural_connections[24]*z1 + self.neural_connections[25]*z2 + self.neural_connections[26]*z3
         o4 = self.neural_connections[27]*z1 + self.neural_connections[28]*z2 + self.neural_connections[29]*z3
+        
+        o1,o2,o3,o4 = self.__softmax([o1,o2,o3,o4])
         
         # Alternate network with 24 neurons
         # o1 = self.__sigmoid(self.neural_connections[ 0]*x0 + self.neural_connections[ 1]*x1 + self.neural_connections[ 2]*x2 + self.neural_connections[ 3]*x3 + self.neural_connections[ 4]*x4 + self.neural_connections[ 5]*x5)
