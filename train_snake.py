@@ -9,7 +9,7 @@ import curses
 from   curses import wrapper as curses_wrap
 
 MIN_SCRN_HEIGHT = 25
-MIN_SCRN_WIDTH  = 80
+MIN_SCRN_WIDTH  = 25
 
 MAX_POPULATION  = 10000
 FIT_POPULATION  = 5000
