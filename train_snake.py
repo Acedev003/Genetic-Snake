@@ -332,6 +332,8 @@ def crossover_and_mutate(snake_a:'Snake',snake_b:'Snake'):
 
 def replay_movement(snake:'Snake',food:'Food',screen:'curses._CursesWindow'):
     count = 5000
+    curses.raw()
+    curses.cbreak()
     while snake.alive or count < 0:
         screen.clear()
         key = screen.getch()
@@ -345,6 +347,10 @@ def replay_movement(snake:'Snake',food:'Food',screen:'curses._CursesWindow'):
         screen.refresh()
         time.sleep(0.05)
         count-=1   
+    
+    screen.clear()
+    curses.raw(False)
+    curses.cbreak(False)
 
 def main(screen: 'curses._CursesWindow'):
     train_loop_running = True
