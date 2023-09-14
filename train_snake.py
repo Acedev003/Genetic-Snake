@@ -322,13 +322,13 @@ def crossover_and_mutate(snake_a:'Snake',snake_b:'Snake'):
         wght_a = wght_a | last2_bits_b
         wght_b = wght_b | last2_bits_a
                 
-        # Mutation by random flipping of a bit
+        # Mutation by random flipping of a bit  
         if random.random() < MUTATION_PRBLTY:
-            mask   = 1 << random.choice([0,1,2])
+            mask   = 1 << random.choice([0,1,2,3,4])
             wght_a = mask ^ wght_a
                     
         if random.random() < MUTATION_PRBLTY:
-                    mask   = 1 << random.choice([0,1,2])
+                    mask   = 1 << random.choice([0,1,2,3,4])
                     wght_b = mask ^ wght_b
                     
         conns_a.append(wght_a)
@@ -416,7 +416,6 @@ def main(screen: 'curses._CursesWindow'):
         # Getting data of current generation's best snake
         best_snake       = copy.deepcopy(snakes[0])
         best_snks_food   = best_snake.food
-        best_snake.reset_body()
         best_snake.debug = True
         best_snake.log("")
         best_snake.log("+-------------------------------------------------------------------------+")
@@ -475,12 +474,13 @@ def main(screen: 'curses._CursesWindow'):
         screen.clear()
         
         # Save best_snake if current length defeats previous record
-        if len(best_snake.body)>best_snake_size:
+        if len(best_snake)>best_snake_size:
             best_snake_size = len(best_snake.body)
             with open('best_snake.snk','wb') as file:
                 pickle.dump(best_snake,file)    
             best_snake.log(f"Snake {best_snake.id} Saved")
         
+        best_snake.reset_body()
         best_snake.debug = False    # Resets the best snake debug mode
         
         screen.addstr(f"Processing Generation {generation_count}")
