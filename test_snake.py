@@ -46,12 +46,12 @@ class Snake:
         if (direction == self.DIR_RGT):
             return [(heady,headx-i)for i in range(length)]
     
-    # Sigmoid function - buggy
-    def __sigmoid(self,x):
-        try:
-            return 1/(1+math.exp(-x))
-        except(OverflowError):
-            return float('inf')
+    #softmax function    
+    def __softmax(self,x:list):
+        x       = [val-max(x) for val in x]
+        exp_val = [ math.exp(val) for val in x ]
+        denom   = sum(exp_val)
+        return [x/denom for x in exp_val]
     
     # Helper Logging utility
     def __log(self,msg):
@@ -114,22 +114,22 @@ class Snake:
         self.distance_foodx = headx - self.food.position[1]
     
         if heady-1 < 0 or (heady-1,headx) in self.body:
-            self.obstacle_top = 0.1
+            self.obstacle_top = 1
         else:
             self.obstacle_top = 0
         
         if heady+1 > self.limity-1 or (heady+1,headx) in self.body:
-            self.obstacle_dwn = 0.1
+            self.obstacle_dwn = 1
         else:
             self.obstacle_dwn = 0
             
         if headx-1 < 0 or (heady,headx-1) in self.body:
-            self.obstacle_lft = 0.1
+            self.obstacle_lft = 1
         else:
             self.obstacle_lft = 0
             
         if headx+1 > self.limitx-1 or (heady,headx+1) in self.body:
-            self.obstacle_rgt = 0.1
+            self.obstacle_rgt = 1
         else:
             self.obstacle_rgt = 0
             
@@ -141,7 +141,7 @@ class Snake:
         # Died due to not eating for long
         if self.life < 1:
             self.__log(f"Snake {self.id} Dead   : No life")
-            self.penalty = 1000
+            self.penalty = 9998
             self.alive   = False
             return
         
@@ -166,7 +166,9 @@ class Snake:
         o1 = self.neural_connections[18]*z1 + self.neural_connections[19]*z2 + self.neural_connections[20]*z3
         o2 = self.neural_connections[21]*z1 + self.neural_connections[22]*z2 + self.neural_connections[23]*z3
         o3 = self.neural_connections[24]*z1 + self.neural_connections[25]*z2 + self.neural_connections[26]*z3
-        o4 = self.neural_connections[27]*z1 + self.neural_connections[28]*z2 + self.neural_connections[28]*z3
+        o4 = self.neural_connections[27]*z1 + self.neural_connections[28]*z2 + self.neural_connections[29]*z3
+        
+        o1,o2,o3,o4 = self.__softmax([o1,o2,o3,o4])
         
         # Alternate network with 24 neurons
         # o1 = self.__sigmoid(self.neural_connections[ 0]*x0 + self.neural_connections[ 1]*x1 + self.neural_connections[ 2]*x2 + self.neural_connections[ 3]*x3 + self.neural_connections[ 4]*x4 + self.neural_connections[ 5]*x5)
@@ -216,14 +218,14 @@ class Snake:
             body.append(bone)
             
         if grow:
-            self.life=500
+            self.life=SNAKE_LIFE
             body.append(self.body[-1])
             self.food.change_position(self)
         
         # Wall Collision Check
         if body[0][0] < 0 or body[0][0] > self.limity-1 or body[0][1] < 0 or body[0][1] > self.limitx-1:
             self.__log(f"Snake {self.id} Dead   : Wall collision")
-            self.penalty = 100
+            self.penalty = 9999
             self.alive   = False
             return
         
@@ -250,6 +252,7 @@ class Snake:
     def reset_body(self):
         self.life       = SNAKE_LIFE
         self.step_count = 0
+        self.penalty    = 0
         self.alive      = True
         self.body       = self.__generate_body(self.limity,self.limitx,self.def_length,self.initial_direction)
     
@@ -287,7 +290,7 @@ class Food:
     # Render food to screen
     def draw(self,screen: 'curses._CursesWindow'):     
         screen.addch(self.position[0],self.position[1],FOOD_CHAR)
-   
+      
 
 def main(screen: 'curses._CursesWindow'):
     
