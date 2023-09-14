@@ -3,6 +3,8 @@ import math
 import time
 import random
 import pickle
+import json
+import statistics
 
 from multiprocessing import Pool
 
@@ -12,16 +14,16 @@ from   curses import wrapper as curses_wrap
 MIN_SCRN_HEIGHT = 25
 MIN_SCRN_WIDTH  = 25
 
-MAX_POPULATION  = 5000
-FIT_POPULATION  = 2500
-ELITE_GUYS      = 500
+MAX_POPULATION  = 10000
+FIT_POPULATION  = 8000
+ELITE_GUYS      = 1000
 GEN_STEPS       = 2000
 MUTATION_PRBLTY = 0.40
 
 MAX_CONN_WGHT   = 8
 CONNECTIONS_CNT = 30
 
-CPU_POOL_SIZE    = 4
+CPU_POOL_SIZE    = 3
 
 SNAKE_LIFE = 2000
 START_SIZE = 3
@@ -356,10 +358,16 @@ def replay_movement(snake:'Snake',food:'Food',screen:'curses._CursesWindow'):
     curses.raw(False)
     curses.cbreak(False)
 
+def log_json(data:dict):
+    with open("stats.txt",'a') as file:
+        file.write(json.dumps(data)+"\n")
+
 def main(screen: 'curses._CursesWindow'):
     train_loop_running = True
+    replay_enabled     = False
     generation_count   = 0
     best_snake_size    = 0
+    execution_time     = 0
 
     screen_height,screen_width = screen.getmaxyx()
     
@@ -390,12 +398,15 @@ def main(screen: 'curses._CursesWindow'):
                 snake.food = copy.deepcopy(food)
         
         # Make snakes perceive and move about in the environment
+        start_time = time.time()
         with Pool(CPU_POOL_SIZE) as pool:
             new_snakes = pool.map(interact,snakes)
+        execution_time = time.time() - start_time
         
         # Fitness based sorting and elimination of the population
         new_snakes = sorted(new_snakes,key = lambda x : x.step_count)
         new_snakes = sorted(new_snakes,key = lambda x : x.penalty)
+        new_snakes = sorted(new_snakes,key = lambda x : x.alive,reverse=True)
         new_snakes = sorted(new_snakes,key = lambda x : len(x),reverse=True)[:FIT_POPULATION]
         
         # Elitism - selecting the top players directly to next generation
@@ -437,15 +448,24 @@ def main(screen: 'curses._CursesWindow'):
             screen.addstr(i,20,f"Penalty : {snakes[i].penalty}")
             screen.addstr(i,40,f"ID : {snakes[i].id}")
         
+        log_json(dict({
+            "gen_count" : generation_count,
+            "gen_comp_time" : execution_time,
+            "max_size" : len(snakes[0]),
+            "avg_size_10" : sum([len(snakes[i].body) for i in range(10)])/10,
+            f"freq_penalty_10" : statistics.mode([x.penalty for x in snakes[:10]])
+        }))
+        
         screen.addstr(screen_height-2,0,f"Generation: {generation_count}")
         generation_count+=1
         screen.refresh()
+        
         
         # Reset bodies of mutated snakes for next generation
         for snake in snakes:
             snake.reset_body()
         
-        if generation_count > 20:
+        if generation_count > 20 and replay_enabled:
             time.sleep(2)
 
             # Replay of current generation's best snake
