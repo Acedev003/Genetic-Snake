@@ -58,12 +58,14 @@ def crossover_and_mutate(snake_a:'Snake',snake_b:'Snake'):
                 
         # Mutation by random flipping of a bit  
         if random.random() < MUTATION_PRBLTY:
-            mask   = 1 << random.choice([0,1,2,3,4])
-            wght_a = mask ^ wght_a
+            #mask   = 1 << random.choice([0,1,2,3,4])
+            #wght_a = mask ^ wght_a
+            wght_a += random.choice([4,8,16,32]) * random.choice([1,-1])
                     
         if random.random() < MUTATION_PRBLTY:
-                    mask   = 1 << random.choice([0,1,2,3,4])
-                    wght_b = mask ^ wght_b
+            #mask   = 1 << random.choice([0,1,2,3,4])
+            #wght_b = mask ^ wght_b
+            wght_b += random.choice([4,8,16,32]) * random.choice([1,-1])
                     
         conns_a.append(wght_a)
         conns_b.append(wght_b)

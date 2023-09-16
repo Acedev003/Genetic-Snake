@@ -151,10 +151,10 @@ class Snake:
         o1,o2,o3,o4 = self.__softmax([o1,o2,o3,o4])
         
         # Alternate network with 24 neurons
-        # o1 = self.__sigmoid(self.neural_connections[ 0]*x0 + self.neural_connections[ 1]*x1 + self.neural_connections[ 2]*x2 + self.neural_connections[ 3]*x3 + self.neural_connections[ 4]*x4 + self.neural_connections[ 5]*x5)
-        # o2 = self.__sigmoid(self.neural_connections[ 6]*x0 + self.neural_connections[ 7]*x1 + self.neural_connections[ 8]*x2 + self.neural_connections[ 9]*x3 + self.neural_connections[10]*x4 + self.neural_connections[11]*x5)
-        # o3 = self.__sigmoid(self.neural_connections[12]*x0 + self.neural_connections[13]*x1 + self.neural_connections[14]*x2 + self.neural_connections[15]*x3 + self.neural_connections[16]*x4 + self.neural_connections[17]*x5)  
-        # o4 = self.__sigmoid(self.neural_connections[18]*x0 + self.neural_connections[19]*x1 + self.neural_connections[20]*x2 + self.neural_connections[21]*x3 + self.neural_connections[22]*x4 + self.neural_connections[23]*x5)
+        # o1 = (self.neural_connections[ 0]*x0 + self.neural_connections[ 1]*x1 + self.neural_connections[ 2]*x2 + self.neural_connections[ 3]*x3 + self.neural_connections[ 4]*x4 + self.neural_connections[ 5]*x5)
+        # o2 = (self.neural_connections[ 6]*x0 + self.neural_connections[ 7]*x1 + self.neural_connections[ 8]*x2 + self.neural_connections[ 9]*x3 + self.neural_connections[10]*x4 + self.neural_connections[11]*x5)
+        # o3 = (self.neural_connections[12]*x0 + self.neural_connections[13]*x1 + self.neural_connections[14]*x2 + self.neural_connections[15]*x3 + self.neural_connections[16]*x4 + self.neural_connections[17]*x5)  
+        # o4 = (self.neural_connections[18]*x0 + self.neural_connections[19]*x1 + self.neural_connections[20]*x2 + self.neural_connections[21]*x3 + self.neural_connections[22]*x4 + self.neural_connections[23]*x5)
         
         index = [o1,o2,o3,o4].index(max([o1,o2,o3,o4]))
         
