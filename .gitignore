@@ -1,3 +1,4 @@
 *.txt
 *.snk
 __pycache__
+env
